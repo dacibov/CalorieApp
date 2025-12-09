@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 
 import { useMealsStore } from '../../src/state/meals';
@@ -54,10 +54,6 @@ export default function TodayScreen() {
     router.push('/camera');
   };
 
-  const handleCopyYesterday = () => {
-    copyYesterday();
-  };
-
   const handlePrevDay = () => {
     setViewDate((prev) => {
       const d = new Date(prev);
@@ -83,6 +79,15 @@ export default function TodayScreen() {
     addMealForDate(500, viewDate);
   };
 
+  // Copy yesterday → current viewDate
+  const handleCopyYesterday = () => {
+    copyYesterday(viewDate);
+    Alert.alert(
+      'Copied',
+      'Meals from yesterday have been copied to this day.'
+    );
+  };
+
   const today = new Date();
   const isViewingToday = isSameDay(today, viewDate);
 
@@ -92,6 +97,11 @@ export default function TodayScreen() {
         month: 'short',
         day: 'numeric',
       });
+
+  // Determine if yesterday (relative to viewDate) has any meals
+  const prevDate = new Date(viewDate);
+  prevDate.setDate(prevDate.getDate() - 1);
+  const hasPreviousDayMeals = getMealsForDay(prevDate).length > 0;
 
   return (
     <View style={styles.container}>
@@ -116,7 +126,16 @@ export default function TodayScreen() {
 
       <View style={styles.spacerSmall} />
 
-      <Button title="Copy yesterday" onPress={handleCopyYesterday} />
+      {hasPreviousDayMeals && (
+        <Button
+          title={
+            isViewingToday
+              ? 'Copy yesterday to today'
+              : 'Copy previous day to this day'
+          }
+          onPress={handleCopyYesterday}
+        />
+      )}
 
       <View style={styles.spacerSmall} />
 

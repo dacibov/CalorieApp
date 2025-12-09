@@ -12,7 +12,7 @@ export type MealsState = {
   addMealForDate: (totalCalories: number, date: Date) => void;
   getMealsForDay: (date: Date) => Meal[];
   getLoggedDaysCount: (daysBack: number) => number;
-  copyYesterday: () => void;
+  copyYesterday: (targetDate: Date) => void;
 };
 
 export const useMealsStore = create<MealsState>((set, get) => ({
@@ -88,36 +88,44 @@ export const useMealsStore = create<MealsState>((set, get) => ({
     return count;
   },
 
-  copyYesterday: () => {
+  // Copy all meals from "yesterday" into the given targetDate
+  copyYesterday: (targetDate: Date) => {
     const { meals } = get();
 
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
+    // Source day = day before targetDate
+    const src = new Date(targetDate);
+    src.setDate(src.getDate() - 1);
 
-    const start = new Date(yesterday);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
+    const srcStart = new Date(src);
+    srcStart.setHours(0, 0, 0, 0);
+    const srcEnd = new Date(srcStart);
+    srcEnd.setDate(srcEnd.getDate() + 1);
 
-    const yMeals = meals.filter(
+    const yesterdayMeals = meals.filter(
       (meal) =>
-        meal.timestamp >= start.getTime() && meal.timestamp < end.getTime()
+        meal.timestamp >= srcStart.getTime() &&
+        meal.timestamp < srcEnd.getTime()
     );
 
-    if (yMeals.length === 0) return;
+    if (yesterdayMeals.length === 0) return;
 
-    const now = Date.now();
+    // All copied meals get timestamps that clearly belong to targetDate
+    set((state) => {
+      const base = new Date(targetDate);
+      base.setHours(12, 0, 0, 0);
+      const baseTs = base.getTime();
 
-    set((state) => ({
-      meals: [
-        ...state.meals,
-        ...yMeals.map((meal, index) => ({
-          id: `${now}-${state.meals.length + index + 1}`,
-          timestamp: now,
-          totalCalories: meal.totalCalories,
-        })),
-      ],
-    }));
+      return {
+        meals: [
+          ...state.meals,
+          ...yesterdayMeals.map((meal, index) => ({
+            id: `${baseTs + index}-${state.meals.length + index + 1}`,
+            // spread them by minutes so they’re unique but same day
+            timestamp: baseTs + index * 60000,
+            totalCalories: meal.totalCalories,
+          })),
+        ],
+      };
+    });
   },
 }));
