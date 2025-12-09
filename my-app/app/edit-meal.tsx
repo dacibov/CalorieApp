@@ -1,6 +1,6 @@
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMealsStore } from '../state/meals';
+import { useMealsStore } from '../src/state/meals';
 
 export default function EditMealScreen() {
   const { photoUri } = useLocalSearchParams<{ photoUri?: string }>();

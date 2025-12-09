@@ -6,11 +6,12 @@ export type Meal = {
   totalCalories: number;
 };
 
-type MealsState = {
+export type MealsState = {
   meals: Meal[];
   addMeal: (totalCalories: number, timestamp?: number) => void;
   getMealsForDay: (date: Date) => Meal[];
   getLoggedDaysCount: (daysBack: number) => number;
+  copyYesterday: () => void;
 };
 
 export const useMealsStore = create<MealsState>((set, get) => ({
@@ -64,67 +65,7 @@ export const useMealsStore = create<MealsState>((set, get) => ({
 
     return count;
   },
-}));
-type MealsState = {
-  meals: Meal[];
-  addMeal: (totalCalories: number, timestamp?: number) => void;
-  getMealsForDay: (date: Date) => Meal[];
-  getLoggedDaysCount: (daysBack: number) => number;
-  copyYesterday: () => void; // 👈 add this
-};
-export const useMealsStore = create<MealsState>((set, get) => ({
-  meals: [],
 
-  addMeal: (totalCalories, timestamp = Date.now()) =>
-    set((state) => ({
-      meals: [
-        ...state.meals,
-        {
-          id: `${timestamp}-${state.meals.length + 1}`,
-          timestamp,
-          totalCalories,
-        },
-      ],
-    })),
-
-  getMealsForDay: (date: Date) => {
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-
-    return get().meals.filter(
-      (meal) =>
-        meal.timestamp >= start.getTime() && meal.timestamp < end.getTime()
-    );
-  },
-
-  getLoggedDaysCount: (daysBack: number) => {
-    const { meals } = get();
-    const today = new Date();
-
-    let count = 0;
-
-    for (let i = 0; i < daysBack; i++) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-
-      const hasMealThatDay = meals.some((meal) => {
-        const md = new Date(meal.timestamp);
-        return (
-          md.getFullYear() === d.getFullYear() &&
-          md.getMonth() === d.getMonth() &&
-          md.getDate() === d.getDate()
-        );
-      });
-
-      if (hasMealThatDay) count++;
-    }
-
-    return count;
-  },
-
-  // 👇 NEW
   copyYesterday: () => {
     const { meals } = get();
 
@@ -132,7 +73,6 @@ export const useMealsStore = create<MealsState>((set, get) => ({
     const yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
 
-    // find yesterday’s meals
     const start = new Date(yesterday);
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
@@ -143,7 +83,7 @@ export const useMealsStore = create<MealsState>((set, get) => ({
         meal.timestamp >= start.getTime() && meal.timestamp < end.getTime()
     );
 
-    if (yMeals.length === 0) return; // nothing to copy
+    if (yMeals.length === 0) return;
 
     const now = Date.now();
 
@@ -152,7 +92,7 @@ export const useMealsStore = create<MealsState>((set, get) => ({
         ...state.meals,
         ...yMeals.map((meal, index) => ({
           id: `${now}-${state.meals.length + index + 1}`,
-          timestamp: now, // treat as today
+          timestamp: now,
           totalCalories: meal.totalCalories,
         })),
       ],

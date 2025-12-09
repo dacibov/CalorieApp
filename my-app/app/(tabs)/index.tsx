@@ -1,11 +1,21 @@
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { useMealsStore } from '../../state/meals';
+import { useMealsStore } from '../../src/state/meals';
+import { useGoalsStore } from '../../src/state/goals';
+import { useEffect } from 'react';
+import * as react from 'react';
+
+
+
 
 export default function TodayScreen() {
   const getMealsForDay = useMealsStore((state) => state.getMealsForDay);
   const getLoggedDaysCount = useMealsStore((state) => state.getLoggedDaysCount);
   const copyYesterday = useMealsStore((state) => state.copyYesterday);
+
+  const dailyCaloriesTarget = useGoalsStore((state) => state.dailyCaloriesTarget);
+  const statusMessage = useGoalsStore((state) => state.statusMessage);
+  const updateTodayIntake = useGoalsStore((state) => state.updateTodayIntake);
 
   const todayMeals = getMealsForDay(new Date());
   const totalToday = todayMeals.reduce(
@@ -14,6 +24,12 @@ export default function TodayScreen() {
   );
 
   const loggedLast7 = getLoggedDaysCount(7);
+
+  react.useEffect(() => {
+  updateTodayIntake(totalToday);
+}, [totalToday, updateTodayIntake]);
+
+
 
   const handleOpenCamera = () => {
     router.push('/camera');
@@ -27,8 +43,11 @@ export default function TodayScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>MealFlash – Today</Text>
 
-      <Text style={styles.text}>Calories today: {totalToday} / 1800</Text>
-      <Text style={styles.text}>On track to hit 72 kg by March 12</Text>
+      <Text style={styles.text}>
+  Calories today: {totalToday} / {dailyCaloriesTarget}
+</Text>
+<Text style={styles.text}>{statusMessage}</Text>
+
       <Text style={styles.text}>Logged {loggedLast7} of last 7 days</Text>
 
       <View style={styles.spacer} />
