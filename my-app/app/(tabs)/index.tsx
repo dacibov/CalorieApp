@@ -1,21 +1,26 @@
+import React, { useEffect } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+
 import { useMealsStore } from '../../src/state/meals';
 import { useGoalsStore } from '../../src/state/goals';
-import { useEffect } from 'react';
-import * as react from 'react';
-
-
-
+import { useWeeklyCheckIn } from '../../src/hooks/useWeeklyCheckIn';
+import WeeklyCheckInOverlay from '../../src/screens/WeeklyCheckInOverlay';
 
 export default function TodayScreen() {
   const getMealsForDay = useMealsStore((state) => state.getMealsForDay);
   const getLoggedDaysCount = useMealsStore((state) => state.getLoggedDaysCount);
   const copyYesterday = useMealsStore((state) => state.copyYesterday);
 
-  const dailyCaloriesTarget = useGoalsStore((state) => state.dailyCaloriesTarget);
+  const dailyCaloriesTarget = useGoalsStore(
+    (state) => state.dailyCaloriesTarget
+  );
   const statusMessage = useGoalsStore((state) => state.statusMessage);
-  const updateTodayIntake = useGoalsStore((state) => state.updateTodayIntake);
+  const updateTodayIntake = useGoalsStore(
+    (state) => state.updateTodayIntake
+  );
+
+  const weeklyCheckIn = useWeeklyCheckIn();
 
   const todayMeals = getMealsForDay(new Date());
   const totalToday = todayMeals.reduce(
@@ -25,11 +30,9 @@ export default function TodayScreen() {
 
   const loggedLast7 = getLoggedDaysCount(7);
 
-  react.useEffect(() => {
-  updateTodayIntake(totalToday);
-}, [totalToday, updateTodayIntake]);
-
-
+  useEffect(() => {
+    updateTodayIntake(totalToday);
+  }, [totalToday, updateTodayIntake]);
 
   const handleOpenCamera = () => {
     router.push('/camera');
@@ -44,10 +47,9 @@ export default function TodayScreen() {
       <Text style={styles.title}>MealFlash – Today</Text>
 
       <Text style={styles.text}>
-  Calories today: {totalToday} / {dailyCaloriesTarget}
-</Text>
-<Text style={styles.text}>{statusMessage}</Text>
-
+        Calories today: {totalToday} / {dailyCaloriesTarget}
+      </Text>
+      <Text style={styles.text}>{statusMessage}</Text>
       <Text style={styles.text}>Logged {loggedLast7} of last 7 days</Text>
 
       <View style={styles.spacer} />
@@ -57,6 +59,16 @@ export default function TodayScreen() {
       <View style={styles.spacerSmall} />
 
       <Button title="Copy yesterday" onPress={handleCopyYesterday} />
+
+      <WeeklyCheckInOverlay
+        visible={weeklyCheckIn.visible}
+        daysLogged={weeklyCheckIn.daysLoggedThisWeek}
+        avgIntake={weeklyCheckIn.avgIntakeThisWeek}
+        targetCalories={weeklyCheckIn.targetCalories}
+        goalDateLabel={weeklyCheckIn.goalDateLabel}
+        summaryMessage={weeklyCheckIn.summaryMessage}
+        onDismiss={weeklyCheckIn.dismiss}
+      />
     </View>
   );
 }
