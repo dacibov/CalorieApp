@@ -9,6 +9,7 @@ export type Meal = {
 export type MealsState = {
   meals: Meal[];
   addMeal: (totalCalories: number, timestamp?: number) => void;
+  addMealForDate: (totalCalories: number, date: Date) => void;
   getMealsForDay: (date: Date) => Meal[];
   getLoggedDaysCount: (daysBack: number) => number;
   copyYesterday: () => void;
@@ -17,6 +18,7 @@ export type MealsState = {
 export const useMealsStore = create<MealsState>((set, get) => ({
   meals: [],
 
+  // Normal "log now" meal
   addMeal: (totalCalories, timestamp = Date.now()) =>
     set((state) => ({
       meals: [
@@ -28,6 +30,26 @@ export const useMealsStore = create<MealsState>((set, get) => ({
         },
       ],
     })),
+
+  // Log a meal for an arbitrary calendar day (used by date navigation / quick-add)
+  addMealForDate: (totalCalories, date) =>
+    set((state) => {
+      const d = new Date(date);
+      // Set to midday to avoid timezone edges when comparing by date
+      d.setHours(12, 0, 0, 0);
+      const timestamp = d.getTime();
+
+      return {
+        meals: [
+          ...state.meals,
+          {
+            id: `${timestamp}-${state.meals.length + 1}`,
+            timestamp,
+            totalCalories,
+          },
+        ],
+      };
+    }),
 
   getMealsForDay: (date: Date) => {
     const start = new Date(date);
